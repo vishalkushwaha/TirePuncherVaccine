@@ -8,9 +8,15 @@
 #  Optional overrides:
 #      sudo DOMAIN=tyrepuncturevaccine.com EMAIL=you@example.com bash deploy.sh
 #
-#  Safe to re-run: the first run installs everything; later runs redeploy the
-#  latest code (rebuild frontend, update Python deps, restart the API) while
-#  keeping the database, uploaded media, secrets, and admin password.
+#  Safe to re-run any number of times — every run:
+#    * git-pulls the latest code (if this folder is a git clone)
+#    * mirrors it to /opt (deleted/renamed files are removed, never duplicated)
+#    * rebuilds the Python env only when requirements.txt changes
+#    * builds the frontend into a fresh folder and swaps it in (no downtime,
+#      no leftover old bundles)
+#    * overwrites (never appends) every system config: systemd, nginx, SSL
+#  Always kept: the database, files uploaded on the server, .env secrets,
+#  the admin password, and SSL certificates.
 # =============================================================================
 set -Eeuo pipefail
 
@@ -40,8 +46,28 @@ trap 'die "Failed at line $LINENO: $BASH_COMMAND"' ERR
 grep -q 'trixie\|bookworm' /etc/os-release || warn "Tested on Debian 13; continuing anyway."
 export DEBIAN_FRONTEND=noninteractive
 
-FIRST_INSTALL=false
-[[ -f "$APP_DIR/backend/.env" ]] || FIRST_INSTALL=true
+# Only one deploy at a time (a second run waits instead of colliding)
+exec 9>"/var/lock/${APP_NAME}-deploy.lock"
+flock -w 600 9 || die "Another deploy is still running."
+
+# Pull the latest code first (when deploying from a git clone), then restart
+# this script so the newest version of deploy.sh itself is what runs.
+if [[ -d "$SRC_DIR/.git" && -z "${TPV_PULLED:-}" ]] && command -v git >/dev/null; then
+  step "Updating source code (git pull)"
+  if git -C "$SRC_DIR" pull --ff-only; then
+    ok "Source is up to date"
+  else
+    warn "git pull failed (local changes or no network) — deploying the code as it is"
+  fi
+  export TPV_PULLED=1
+  exec 9>&-
+  exec bash "$SRC_DIR/deploy.sh" "$@"
+fi
+
+# State markers: "installed" is written only after a fully successful first run,
+# so an interrupted first run is completed properly on the next attempt.
+INSTALLED_MARK="$APP_DIR/.installed"
+SHOW_CREDS=false
 
 # --------------------------- 1. System packages ------------------------------
 step "Installing system packages"
@@ -68,20 +94,37 @@ mkdir -p "$APP_DIR/backend/media"
 # Root-level source images (screenshots/WhatsApp posters) are skipped: their web
 # copies already live in frontend/public/assets and backend/media.
 if [[ "$SRC_DIR" != "$APP_DIR" ]]; then
-  rsync -a --delete     --exclude '/.git/' --exclude 'node_modules/' --exclude '__pycache__/'     --exclude '/frontend/dist/' --exclude '/backend/.venv/' --exclude '/backend/venv/'     --exclude '/backend/.env' --exclude '/backend/media/' --exclude '/backend/pg_data/'     --exclude '/backend/*.log' --exclude '/_build/' --exclude '/Proposal/'     --exclude '/*.png' --exclude '/*.jpeg' --exclude '/*.jpg' --exclude '/verify_all_pages.py'     "$SRC_DIR/" "$APP_DIR/"
+  # --delete removes files that no longer exist in the source, so the server
+  # copy is always an exact mirror (no stale or duplicate files).
+  rsync -a --delete \
+    --exclude '/.git/' --exclude 'node_modules/' --exclude '__pycache__/' \
+    --exclude '/frontend/dist/' --exclude '/frontend/dist.new/' \
+    --exclude '/backend/.venv/' --exclude '/backend/venv/' \
+    --exclude '/backend/.env' --exclude '/backend/media/' --exclude '/backend/pg_data/' \
+    --exclude '/backend/*.log' --exclude '/.installed' --exclude '/.requirements.sha' \
+    --exclude '/_build/' --exclude '/Proposal/' \
+    --exclude '/*.png' --exclude '/*.jpeg' --exclude '/*.jpg' --exclude '/verify_all_pages.py' \
+    "$SRC_DIR/" "$APP_DIR/"
+  # Remove local-only artefacts that an older deploy may have copied over
+  rm -rf "$APP_DIR/.git" "$APP_DIR/_build" "$APP_DIR/Proposal" "$APP_DIR/backend/pg_data" \
+         "$APP_DIR/backend/venv" "$APP_DIR/verify_all_pages.py"
+  find "$APP_DIR" -maxdepth 1 -type f \( -name '*.png' -o -name '*.jpeg' -o -name '*.jpg' \) -delete
 fi
-# Seed media from the source folder once (keeps anything uploaded on the server)
+# Media: add new files and update changed ones, never delete uploads made on the server
 if [[ -d "$SRC_DIR/backend/media" && "$SRC_DIR" != "$APP_DIR" ]]; then
-  rsync -a --ignore-existing "$SRC_DIR/backend/media/" "$APP_DIR/backend/media/"
+  rsync -a --update "$SRC_DIR/backend/media/" "$APP_DIR/backend/media/"
 fi
+# Clear stale Python bytecode so removed/renamed modules can't linger
+find "$APP_DIR/backend" -path "$APP_DIR/backend/.venv" -prune -o -type d -name '__pycache__' -print0 | xargs -0 -r rm -rf
 # Strip Windows line endings from shell/python files if the code came from Windows
-find "$APP_DIR" -path "$APP_DIR/frontend/node_modules" -prune -o \( -name '*.sh' -o -name '*.py' \) -type f -print0 | xargs -0 -r sed -i 's/\r$//'
-ok "Code synced"
+find "$APP_DIR" -path "$APP_DIR/frontend/node_modules" -prune -o -path "$APP_DIR/backend/.venv" -prune -o \
+  \( -name '*.sh' -o -name '*.py' \) -type f -print0 | xargs -0 -r sed -i 's/\r$//'
+ok "Code synced (old files removed, new files updated)"
 
 # --------------------------- 3. PostgreSQL -----------------------------------
 step "Configuring PostgreSQL"
 systemctl enable --now postgresql >/dev/null
-if $FIRST_INSTALL; then
+if [[ ! -s "$APP_DIR/backend/.env" ]]; then
   DB_PASS="$(openssl rand -hex 24)"
   SECRET_KEY="$(openssl rand -hex 48)"
   if runuser -u postgres -- psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'" | grep -q 1; then
@@ -108,10 +151,22 @@ chmod 600 "$APP_DIR/backend/.env"
 
 # --------------------------- 4. Backend (FastAPI) ----------------------------
 step "Installing backend dependencies"
-[[ -x "$APP_DIR/backend/.venv/bin/python" ]] || python3 -m venv "$APP_DIR/backend/.venv"
-"$APP_DIR/backend/.venv/bin/pip" install -q --upgrade pip wheel
-"$APP_DIR/backend/.venv/bin/pip" install -q -r "$APP_DIR/backend/requirements.txt"
-ok "Python packages installed"
+# Rebuild the virtualenv from scratch whenever requirements.txt or the Python
+# version changes, so removed/old packages never pile up.
+VENV="$APP_DIR/backend/.venv"
+REQ_STAMP="$APP_DIR/.requirements.sha"
+REQ_SHA="$(cat "$APP_DIR/backend/requirements.txt" <(python3 --version) | sha256sum | cut -d' ' -f1)"
+if [[ ! -x "$VENV/bin/python" || "$(cat "$REQ_STAMP" 2>/dev/null)" != "$REQ_SHA" ]]; then
+  systemctl stop "${APP_NAME}-api" 2>/dev/null || true   # don't run on a half-built env
+  rm -rf "$VENV"
+  python3 -m venv "$VENV"
+  "$VENV/bin/pip" install -q --upgrade pip wheel
+  "$VENV/bin/pip" install -q -r "$APP_DIR/backend/requirements.txt"
+  echo "$REQ_SHA" > "$REQ_STAMP"
+  ok "Python environment rebuilt (requirements changed)"
+else
+  ok "Python packages unchanged — reusing environment"
+fi
 
 chown -R "$APP_USER:$APP_USER" "$APP_DIR/backend"
 
@@ -120,8 +175,9 @@ step "Initialising database schema & seed data"
 ( cd "$APP_DIR/backend" && runuser -u "$APP_USER" -- .venv/bin/python -c "import app.main" ) >/dev/null
 ok "Schema ready"
 
-if $FIRST_INSTALL; then
+if [[ ! -s "$CREDS_FILE" ]]; then
   ADMIN_PASSWORD="${ADMIN_PASSWORD:-$(openssl rand -base64 18 | tr -d '/+=' | cut -c1-16)}"
+  DB_PASS="$(sed -n 's#^DATABASE_URL=postgresql://[^:]*:\([^@]*\)@.*#\1#p' "$APP_DIR/backend/.env")"
   ( cd "$APP_DIR/backend" && runuser -u "$APP_USER" -- env ADMIN_PASSWORD="$ADMIN_PASSWORD" .venv/bin/python - <<'PY'
 import os
 from app.database.session import SessionLocal
@@ -134,8 +190,8 @@ with SessionLocal() as db:
         db.commit()
 PY
   )
-  umask 077
-  cat > "$CREDS_FILE" <<EOF
+  ( umask 077
+    cat > "$CREDS_FILE" <<EOF
 Tyre Puncture Vaccine — server credentials (generated $(date -u +%F))
 Admin panel : /admin/login
 Username    : admin
@@ -144,7 +200,9 @@ DB name     : ${DB_NAME}
 DB user     : ${DB_USER}
 DB password : ${DB_PASS}
 EOF
+  )
   ok "Admin password set (saved to ${CREDS_FILE})"
+  SHOW_CREDS=true
 fi
 
 step "Creating API service (systemd)"
@@ -177,14 +235,24 @@ ok "API service running on 127.0.0.1:${API_PORT}"
 # --------------------------- 5. Frontend (Vite) ------------------------------
 step "Building frontend"
 cd "$APP_DIR/frontend"
-if ! { npm ci --no-audit --no-fund --loglevel=error && npm run build --silent; }; then
+# Build into dist.new, then swap it in: the live site keeps serving the old
+# build until the new one is complete, and no old hashed files are left behind.
+rm -rf dist.new dist.old
+build_frontend() { npm run build --silent -- --outDir dist.new --emptyOutDir; }
+# npm ci always wipes node_modules and installs exactly what the lockfile says
+if ! { npm ci --no-audit --no-fund --loglevel=error && build_frontend; }; then
   warn "Clean install failed (lockfile created on another OS) — retrying with fresh install"
-  rm -rf node_modules package-lock.json
+  rm -rf node_modules dist.new
+  rm -f package-lock.json   # restored from source on the next sync
   npm install --no-audit --no-fund --loglevel=error
-  npm run build --silent
+  build_frontend
 fi
-chmod -R a+rX "$APP_DIR/frontend/dist"
-ok "Frontend built → ${APP_DIR}/frontend/dist"
+[[ -s dist.new/index.html ]] || die "Frontend build produced no index.html"
+chmod -R a+rX dist.new
+[[ -d dist ]] && mv dist dist.old
+mv dist.new dist
+rm -rf dist.old
+ok "Frontend built and swapped in → ${APP_DIR}/frontend/dist"
 
 # --------------------------- 6. Nginx + SSL manager --------------------------
 step "Configuring Nginx & SSL manager (tpv-ssl)"
@@ -414,6 +482,7 @@ curl -fsS "http://127.0.0.1/api/health" >/dev/null && ok "API healthy through Ng
 curl -fsS -o /dev/null "http://127.0.0.1/" && ok "Website responding"
 
 trap - ERR
+date -u +%FT%TZ > "$INSTALLED_MARK"   # last successful deploy
 echo -e "\n${c_ok}==================== Deployment complete ====================${c_off}"
 if $HTTPS_READY; then
   echo "  Website : https://${DOMAIN}/"
@@ -421,7 +490,7 @@ else
   echo "  Website : http://${PUBLIC_IP:-<server-ip>}/  ${DOMAIN:+(HTTPS turns on automatically once ${DOMAIN} points here)}"
 fi
 echo "  Admin   : /admin/login"
-if $FIRST_INSTALL; then echo "  Login   : see ${CREDS_FILE}   (cat ${CREDS_FILE})"; fi
+echo "  Login   : cat ${CREDS_FILE}$($SHOW_CREDS && echo '   (new admin password generated)')"
 echo "  Logs    : journalctl -u ${APP_NAME}-api -f"
 echo "  SSL     : tpv-ssl status | tpv-ssl obtain | tpv-ssl renew | tpv-ssl test"
 echo "  Update  : upload new code to ${SRC_DIR} and run 'sudo bash deploy.sh' again"
