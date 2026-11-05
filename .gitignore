@@ -1,0 +1,34 @@
+# --- Secrets & local environment ---
+.env
+.env.*
+!.env.example
+
+# --- Local PostgreSQL data & logs ---
+backend/pg_data/
+*.log
+
+# --- Python ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# --- Node / build output ---
+node_modules/
+dist/
+
+# --- Business documents & doc build tooling (kept local) ---
+Proposal/
+_build/
+
+# --- Local verification screenshots ---
+/admin_business_mode_verified.png
+/quote_bulk_screenshot.png
+/quote_thor_10_verified.png
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

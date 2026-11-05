@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@theme {
+  --color-navy: #0B2744;
+  --color-navy-dark: #071A2E;
+  --color-navy-light: #14365C;
+  --color-cyan-brand: #0E7490;
+  --color-cyan-hover: #085A70;
+  --color-cyan-light: #E6F4F7;
+  --color-ice: #F4F8FB;
+  --color-cream: #FBF6EA;
+  --color-green: #0E6B45;
+  --color-line: #D5E1EA;
+  --color-ink: #1E2933;
+  --color-muted: #4A5B6A;
+}
+
+@layer base {
+  :root {
+    --color-navy: #0B2744;
+    --color-navy-dark: #071A2E;
+    --color-navy-light: #14365C;
+    --color-cyan: #0E7490;
+    --color-cyan-hover: #085A70;
+    --color-cyan-light: #E6F4F7;
+    --color-ice: #F4F8FB;
+    --color-cream: #FBF6EA;
+    --color-green: #0E6B45;
+    --color-line: #D5E1EA;
+    --color-ink: #1E2933;
+    --color-muted: #4A5B6A;
+  }
+
+  body {
+    background-color: #FFFFFF;
+    color: #1E2933;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+  }
+
+  /* Devanagari Hindi font fallback optimization */
+  [lang="hi"], .font-hindi {
+    font-family: "Noto Sans Devanagari", "Devanagari MT", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+}
+
+/* Custom utility colors */
+.bg-navy { background-color: #0B2744; }
+.bg-navy-dark { background-color: #071A2E; }
+.bg-navy-light { background-color: #14365C; }
+.bg-cyan-brand { background-color: #0E7490; }
+.bg-ice { background-color: #F4F8FB; }
+.bg-cream { background-color: #FBF6EA; }
+.bg-mint { background-color: #E6F4F7; }
+
+.text-navy { color: #0B2744; }
+.text-navy-light { color: #14365C; }
+.text-cyan-brand { color: #0E7490; }
+.text-green-brand { color: #0E6B45; }
+.text-muted-brand { color: #4A5B6A; }
+.text-ink { color: #1E2933; }
+
+.border-line { border-color: #D5E1EA; }
+
+/* Custom smooth transitions */
+.transition-standard {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}

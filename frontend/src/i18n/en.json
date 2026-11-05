@@ -1,0 +1,113 @@
+{
+  "brand": {
+    "name": "Tyre Puncture Vaccine",
+    "firm": "Ujjala Electricals",
+    "city": "Bikaner, Rajasthan",
+    "established": "Est. 2017",
+    "tagline": "Premium Formulation · Advanced Tyre Solutions",
+    "heroTagline": "Say Goodbye to Punctures · Drive with Total Confidence",
+    "heroSubtitle": "The ultimate preventive liquid sealant for tubeless and tube tyres. Instantly seals punctures up to 4mm, prolongs tyre life, and protects vehicles across Indian roads."
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About Us",
+    "products": "Products",
+    "compare": "Compare",
+    "howToUse": "How to Use",
+    "dosageGuide": "Dosage Guide",
+    "distributorship": "Distributorship",
+    "whereToBuy": "Where to Buy",
+    "events": "Events & News",
+    "gallery": "Gallery",
+    "blog": "Blog",
+    "faq": "FAQ",
+    "certifications": "Certifications",
+    "testimonials": "Testimonials",
+    "contact": "Contact",
+    "getQuote": "Get a Quote",
+    "admin": "Admin Panel",
+    "search": "Search..."
+  },
+  "common": {
+    "viewDetails": "View Details",
+    "requestQuote": "Request a Quote",
+    "retailQuote": "Retail Quote",
+    "bulkQuote": "Bulk Order Quote",
+    "becomeDistributor": "Become a Distributor",
+    "learnMore": "Learn More",
+    "submit": "Submit Request",
+    "submitting": "Submitting...",
+    "phone": "Phone",
+    "email": "Email",
+    "address": "Address",
+    "readMore": "Read Article",
+    "warranty": "Warranty",
+    "months": "Months",
+    "mrp": "MRP",
+    "inclusiveTaxes": "Inclusive of all taxes",
+    "packSize": "Pack Size",
+    "suitableFor": "Suitable For",
+    "viewAll": "View All",
+    "success": "Success",
+    "error": "Error"
+  },
+  "products": {
+    "title": "Our Product Range",
+    "subtitle": "Formulated specifically for Indian road conditions and weather extremes (-30°C to +60°C)",
+    "gulfName": "Tyre Puncture Vaccine Gulf",
+    "gulfSub": "Opening sealant for everyday two-wheelers & tubeless tyres",
+    "rockName": "Tyre Puncture Vaccine Rock",
+    "rockSub": "High endurance formula for SUVs, sedans, pickups & tempos",
+    "thorName": "Tyre Puncture Vaccine Thor",
+    "thorSub": "Heavy-duty formulation recommended for buses, trucks & fleets",
+    "compareTitle": "Compare Formulations",
+    "compareSub": "Find the ideal puncture protection formula for your vehicle requirements"
+  },
+  "whyUs": {
+    "title": "Why Tyre Vaccine?",
+    "subtitle": "Zero Puncture Hassle · Maximum Safety & Savings",
+    "point1": "Quickly seals tread area punctures up to 4mm in size instantly upon penetration.",
+    "point2": "Completely safe for metal & alloy finished wheels, preventing rim corrosion.",
+    "point3": "Works continuously for the full operating life of your tyre within warranty.",
+    "point4": "Non-toxic, non-hazardous, and non-flammable eco-friendly compound."
+  },
+  "howToUse": {
+    "title": "How to Use · 6 Simple Steps",
+    "subtitle": "Easily installable through the valve stem using the provided injector syringe",
+    "step1Title": "Step 1: Valve Positioning",
+    "step1Desc": "Keep the tyre nozzle position at either 4 o'clock or 8 o'clock position.",
+    "step2Title": "Step 2: Deflate the Tyre",
+    "step2Desc": "Remove the valve pin from the nozzle using the tool and completely deflate the tyre.",
+    "step3Title": "Step 3: Shake Bottle",
+    "step3Desc": "Shake the Tyre Vaccine bottle vigorously for 8 to 10 seconds so rubber, microfibre, and fluid mix evenly.",
+    "step4Title": "Step 4: Inject Sealant",
+    "step4Desc": "Dip the injector into the bottle, draw required quantity, attach to nozzle, and push gel inside the tyre. Repeat for all wheels.",
+    "step5Title": "Step 5: Refit & Inflate",
+    "step5Desc": "Refix the valve pin securely and inflate the tyre to recommended operating pressure.",
+    "step6Title": "Step 6: Drive to Coat",
+    "step6Desc": "Drive the vehicle for at least 2 to 3 km immediately to allow centrifugal force to form a uniform protective layer inside."
+  },
+  "dosage": {
+    "title": "Installation Guidelines & Dosage Calculator",
+    "subtitle": "Accurate sealant requirements calculated by vehicle category and tyre size",
+    "calculatorTitle": "Interactive Dosage Calculator",
+    "selectVehicle": "Select Vehicle Type",
+    "selectTyreSize": "Select Tyre Size",
+    "calculatedVolume": "Recommended Sealant Volume",
+    "bottlesRequired": "Bottles Required (1 Litre)"
+  },
+  "distributor": {
+    "title": "Distributorship & Business Opportunity",
+    "subtitle": "Partner with Ujjala Electricals across Rajasthan and India",
+    "callout": "Self-Employment & High Growth Commercial Partnership",
+    "formTitle": "Distributor Application Form"
+  },
+  "footer": {
+    "firmNote": "Tyre Puncture Vaccine is manufactured and distributed by Ujjala Electricals, established 2017 in Bikaner, Rajasthan.",
+    "quickLinks": "Quick Links",
+    "productsLinks": "Products",
+    "policyLinks": "Policies & Legal",
+    "rights": "All Rights Reserved. Ujjala Electricals."
+  }
+}
+
