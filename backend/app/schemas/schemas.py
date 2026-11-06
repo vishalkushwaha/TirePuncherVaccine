@@ -15,6 +15,13 @@ class UserLogin(BaseModel):
     username: str
     password: str
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+class AdminSetPasswordRequest(BaseModel):
+    new_password: str
+
 class UserCreate(BaseModel):
     username: str
     email: EmailStr

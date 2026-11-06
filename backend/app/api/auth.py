@@ -2,13 +2,13 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.api.deps import get_db, get_current_user
-from app.core.security import verify_password, get_password_hash, create_access_token, decode_token
+from app.core.security import verify_password, get_password_hash, create_access_token, decode_token, password_policy_error
 from app.core.config import settings
 from app.models.models import User, Customer, CustomerAddress, Order, SiteSetting
 from app.schemas.schemas import (
     Token, UserLogin, UserOut,
     CustomerRegister, CustomerLogin, CustomerOut,
-    ForgotPasswordRequest, ResetPasswordRequest
+    ForgotPasswordRequest, ResetPasswordRequest, ChangePasswordRequest
 )
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -49,6 +49,25 @@ def get_current_user_profile(current_user: User = Depends(get_current_user)):
 # -------------------------------------------------------------
 # Customer Authentication & Registration Flow
 # -------------------------------------------------------------
+@router.post("/change-password")
+def change_password(
+    req: ChangePasswordRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Let a signed-in admin/staff user change their own password."""
+    if not verify_password(req.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    new_pw = req.new_password
+    policy_error = password_policy_error(new_pw)
+    if policy_error:
+        raise HTTPException(status_code=400, detail=policy_error)
+    if new_pw == req.current_password:
+        raise HTTPException(status_code=400, detail="New password must be different from the current password")
+    current_user.hashed_password = get_password_hash(new_pw)
+    db.commit()
+    return {"status": "success", "message": "Password changed successfully"}
+
 @router.post("/customer/register")
 def register_customer(reg: CustomerRegister, db: Session = Depends(get_db)):
     # Check if registration is enabled

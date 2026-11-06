@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Package, ShoppingBag, Building2, Users, MapPin,
   Newspaper, Image, BookOpen, Star, HelpCircle, Award, Flag,
   Settings, UserCheck, LogOut, ExternalLink, Menu, X, MessageSquare, Palette,
-  Sliders, ShoppingCart, AlertTriangle, BarChart3, PackageCheck
+  Sliders, ShoppingCart, AlertTriangle, BarChart3, PackageCheck, KeyRound
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -140,6 +140,19 @@ export default function AdminLayout() {
               <ExternalLink size={14} />
             </Link>
           </div>
+
+          <NavLink
+            to="/admin/account"
+            onClick={() => setSidebarOpen(false)}
+            className={({ isActive }) =>
+              `w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                isActive ? 'bg-cyan-700 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'
+              }`
+            }
+          >
+            <KeyRound size={14} />
+            <span>My Account &amp; Password</span>
+          </NavLink>
 
           <button
             onClick={() => {

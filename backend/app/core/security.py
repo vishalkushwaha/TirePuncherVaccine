@@ -10,6 +10,19 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     except Exception:
         return False
 
+PASSWORD_MIN_LENGTH = 8
+PASSWORD_MAX_BYTES = 72  # bcrypt ignores anything beyond 72 bytes
+
+
+def password_policy_error(password: str) -> Optional[str]:
+    """Return a user-facing error if the password breaks the policy, else None."""
+    if len(password) < PASSWORD_MIN_LENGTH:
+        return f"New password must be at least {PASSWORD_MIN_LENGTH} characters"
+    if len(password.encode("utf-8")) > PASSWORD_MAX_BYTES:
+        return f"New password must be at most {PASSWORD_MAX_BYTES} characters"
+    return None
+
+
 def get_password_hash(password: str) -> str:
     # Truncate to 72 bytes for bcrypt safety
     pw_bytes = password.encode('utf-8')[:72]

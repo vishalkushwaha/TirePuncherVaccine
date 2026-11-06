@@ -94,6 +94,17 @@ export const api = {
   // Admin CMS Endpoints
   admin: {
     getStats: () => fetch(`${API_BASE}/quotes/stats`, { headers: getAuthHeaders() }).then(r => r.json()),
+
+    // Account
+    changePassword: (current_password, new_password) => fetch(`${API_BASE}/auth/change-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify({ current_password, new_password })
+    }).then(async r => {
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.detail || 'Failed to change password');
+      return data;
+    }),
     
     // Products
     getAllProducts: () => fetch(`${API_BASE}/products/all`, { headers: getAuthHeaders() }).then(r => r.json()),
@@ -287,6 +298,15 @@ export const api = {
       body: JSON.stringify(data)
     }).then(r => r.json()),
     deleteUser: (id) => fetch(`${API_BASE}/users/${id}`, { method: 'DELETE', headers: getAuthHeaders() }),
+    setUserPassword: (id, new_password) => fetch(`${API_BASE}/users/${id}/password`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify({ new_password })
+    }).then(async r => {
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.detail || 'Failed to update password');
+      return data;
+    }),
 
     // Upload
     uploadFile: (file) => {

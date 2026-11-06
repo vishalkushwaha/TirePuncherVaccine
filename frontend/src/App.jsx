@@ -66,6 +66,7 @@ import AdminMessages from './pages/admin/AdminMessages';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminThemes from './pages/admin/AdminThemes';
 import AdminUsers from './pages/admin/AdminUsers';
+import AdminAccount from './pages/admin/AdminAccount';
 
 // E-Commerce Admin Management Modules
 import AdminBusinessMode from './pages/admin/AdminBusinessMode';
@@ -170,6 +171,7 @@ export default function App() {
                     <Route path="settings" element={<AdminSettings />} />
                     <Route path="themes" element={<AdminThemes />} />
                     <Route path="users" element={<AdminUsers />} />
+                    <Route path="account" element={<AdminAccount />} />
                   </Route>
                 </Routes>
               </BrowserRouter>
