@@ -328,9 +328,9 @@ render_nginx() {
   local names="_"
   [[ -n "$DOMAIN" ]] && names="${DOMAIN} www.${DOMAIN}"
   {
-    echo "server_tokens off;"
     echo "server {"
     echo "    listen 80 default_server;"
+    echo "    server_tokens off;"
     echo "    listen [::]:80 default_server;"
     echo "    server_name ${names};"
     echo "    location ^~ /.well-known/acme-challenge/ { root /var/www/letsencrypt; default_type text/plain; }"
@@ -339,6 +339,7 @@ render_nginx() {
       echo "}"
       echo "server {"
       echo "    listen 443 ssl default_server;"
+      echo "    server_tokens off;"
       echo "    listen [::]:443 ssl default_server;"
       echo "    http2 on;"
       echo "    server_name ${names};"
