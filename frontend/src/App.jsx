@@ -11,6 +11,7 @@ import TopBar from './components/common/TopBar';
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
 import WhatsAppButton from './components/common/WhatsAppButton';
+import ScrollToTop from './components/common/ScrollToTop';
 
 // 26 Core Public Pages
 import Home from './pages/Home';
@@ -98,6 +99,7 @@ export default function App() {
           <ShopConfigProvider>
             <CartProvider>
               <BrowserRouter>
+                <ScrollToTop />
                 <Routes>
                   {/* Public Routes */}
                   <Route element={<PublicLayout />}>
